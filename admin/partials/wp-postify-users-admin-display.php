@@ -52,8 +52,6 @@ if ( !current_user_can( 'manage_options' ) )  {
 	$wppusers = $wpdb->get_results($query);
 	echo COUNT($wppusers);
 
-	//$user = get_user_by('id',79);
-	//echo $user->data;
 
 ?>
 <!-- This file should primarily consist of HTML with a little bit of PHP. -->

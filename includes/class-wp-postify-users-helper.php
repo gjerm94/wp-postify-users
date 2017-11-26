@@ -103,7 +103,7 @@ class Wp_Postify_Users_Helper {
 	 * @since    1.0.0
 	 */
 	public function register_user_posts() {
-							
+
 		//get all the registered users
 		global $wpdb;
 		$users = get_users();
@@ -121,6 +121,8 @@ class Wp_Postify_Users_Helper {
 			
 			//get all the needed field data from current member here
 			$user_id = $user->id;
+
+			if ( ! $this->get_post_by_user_id($user_id) ) {
 			$username = $user->user_login;			
 
 			//make a new post with the 'BPPMember' type
@@ -135,6 +137,7 @@ class Wp_Postify_Users_Helper {
 
 			//store the user data in a hidden field for updating purposes
 			add_post_meta($post_id, "_user", $user->data);
+			add_post_meta($post_id, "_user_id", $user_id);
 
 			if($post_id) {
 				//post was successfully registered
@@ -153,7 +156,7 @@ class Wp_Postify_Users_Helper {
 					endwhile; //groups
 		
 			}*/
-			
+			}
 		}	
 
 		$post_count_notice = $post_count . " posts generated.";
@@ -184,11 +187,56 @@ class Wp_Postify_Users_Helper {
 	}
 
 	/**
-	 * Check if user info changed since last time the post was inserted
+	 * Check if user data changed/exists since last inserted post
 	 *
 	 * @since 1.0.0
 	 */
 	public function user_info_is_updated($user_id) {
+		$user = get_user_by('id',$user_id);
+		$user_data = $user->data;
 
+		$user_post_data = get_post_meta(4092, "_user");
+		
+
+
+		//get post meta returns array so we need to compare the first value of user_post_data
+		if ( $user_data == $user_post_data[0] ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Gets a post with a users ID
+	 * 
+	 * @since 1.0.0
+	 */
+	public function get_post_by_user_id($user_id) {
+		$args = array(
+			'post_type' => 'WPPUser',
+		   	'meta_query' => array(
+		       array(
+		           'key' => '_user_id',
+		           'value' => $user_id,
+		           'compare' => '=',
+		       )
+		   )
+		);
+		
+		$query = new WP_Query($args);
+
+		if ( $query->have_posts() ) {
+			
+			while ( $query->have_posts() ) {
+				$query->the_post();
+				$user_post_id = get_post_meta(get_the_ID(), "_user_id", true);
+				
+				if ($user_post_id == $user_id) {
+					return true;
+				}
+			}
+		} 
+		return false;
 	}
 }
