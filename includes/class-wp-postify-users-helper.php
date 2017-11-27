@@ -108,13 +108,6 @@ class Wp_Postify_Users_Helper {
 		global $wpdb;
 		$users = get_users();
 
-		$posts_table = $wpdb->posts;
-		$query = "
-				SELECT * FROM {$posts_table}
-				WHERE post_type = 'WPPUser'
-			";
-		$wppusers = $wpdb->get_results($query);
-		
 		$post_count = 0;
 		
 		foreach( $users as $user ) {
@@ -130,7 +123,6 @@ class Wp_Postify_Users_Helper {
 				'post_title'   => $username,
 				'post_status'  => 'publish',
 				'post_type' => 'WPPUser'
-				
 			);
 
 			$post_id = wp_insert_post( $member_post_arr );
@@ -144,7 +136,6 @@ class Wp_Postify_Users_Helper {
 				$post_count++;
 			}
 			//modify the postdata to match the users xprofile field values
-			//Possible bug: Arrays/multivalue fields do not show up in backend
 			/**if ( bp_has_profile() ) {
 				while ( bp_profile_groups() ) : bp_the_profile_group();
 					while ( bp_profile_fields() ) : bp_the_profile_field();
@@ -225,10 +216,10 @@ class Wp_Postify_Users_Helper {
 		);
 		
 		$query = new WP_Query($args);
-
 		if ( $query->have_posts() ) {
 			
 			while ( $query->have_posts() ) {
+				
 				$query->the_post();
 				$user_post_id = get_post_meta(get_the_ID(), "_user_id", true);
 				

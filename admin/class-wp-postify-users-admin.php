@@ -41,6 +41,15 @@ class Wp_Postify_Users_Admin {
 	private $version;
 
 	/**
+	 * The options name to be used in this plugin
+	 *
+	 * @since  	1.0.0
+	 * @access 	private
+	 * @var  	string 		$option_name 	Option name of this plugin
+	 */
+	private $option_name = 'wppu';
+
+	/**
 	 * Initialize the class and set its properties.
 	 *
 	 * @since    1.0.0
@@ -101,21 +110,67 @@ class Wp_Postify_Users_Admin {
 	}
 
 	/**
-	 * Adds a management page under the Tools submenu
+	 * Register the settings for the plugin
 	 *
 	 * @since    1.0.0
 	 */
-	public function add_tools_page()
-	{
-		add_management_page("WP Postify Users", "Postify Users", 'manage_options', "wp-postify-users", array($this, 'display_tools_page'));
+	public function register_setting() {
+		// Add a General section
+		add_settings_section(
+			$this->option_name . '_general',
+			__( 'General', 'wp-postify-users' ),
+			array( $this, $this->option_name . '_general_cb' ),
+			$this->plugin_name
+		);
+
+		add_settings_field(
+			$this->option_name . '_post_type_name',
+			__( 'Name of the custom post type: ', 'outdated-notice' ),
+			array( $this, $this->option_name . '_post_type_name_cb' ),
+			$this->plugin_name,
+			$this->option_name . '_general',
+			array( 'label_for' => $this->option_name . '_post_type_name' )
+		);
+
+		
+		register_setting( $this->plugin_name, $this->option_name . '_post_type_name', $args );
+		//update_option('wppu_post_type_name', array('default' => 'WPPUser'));
 	}
 
 	/**
-	 * Render the tools page for plugin
+	 * Render the text for the general section
 	 *
 	 * @since  1.0.0
 	 */
-	public function display_tools_page()
+	public function wppu_general_cb() {
+		echo '<p>' . __( 'Please change the settings accordingly.', 'wp-postify-users' ) . '</p>';
+	}
+
+	/**
+	 * Render the posttype name input for this plugin
+	 *
+	 * @since  1.0.0
+	 */
+	public function wppu_post_type_name_cb() {
+		echo '<input type="text" name="' . $this->option_name . '_post_type_name' . '" id="' . $this->option_name . '_post_type_name' . '"> ';
+	}
+
+	/**
+	 * Add an options page under the Settings submenu
+	 *
+	 * @since    1.0.0
+	 */
+	public function add_options_page()
+	{
+		add_options_page("WP Postify Users", "Postify Users", 'manage_options', "wp-postify-users", array($this, 'display_options_page'));
+	}
+
+	/**
+	 * Render the options page for plugin
+	 *
+	 * @since  1.0.0
+	 */
+	public function display_options_page()
 	{
 		require_once plugin_dir_path(dirname(__FILE__)) . 'admin/partials/wp-postify-users-admin-display.php';
 	}

@@ -164,8 +164,10 @@ class Wp_Postify_Users {
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
 
 		//setup admin tools page
-		$this->loader->add_action( 'admin_menu', $plugin_admin, 'add_tools_page');
+		$this->loader->add_action( 'admin_menu', $plugin_admin, 'add_options_page');
 		
+		$this->loader->add_action( 'admin_init', $plugin_admin, 'register_setting' );
+
 		//register the generate posts hook
 		$this->loader->add_action( 'admin_post_wppu_generate_posts', $plugin_admin, 'admin_form_posted');
 		
