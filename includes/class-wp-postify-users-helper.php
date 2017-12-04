@@ -66,7 +66,7 @@ class Wp_Postify_Users_Helper {
 	public function register_custom_post_type() {
 
 		/**
-		 * Post Type: BPPMembers.
+		 * Post Type: WPPUsers.
 		 */
 
 		$labels = array(
@@ -106,47 +106,58 @@ class Wp_Postify_Users_Helper {
 
 		//get all the registered users
 		global $wpdb;
+		
 		$users = get_users();
 
 		$post_count = 0;
 		
+		//loop through each user
 		foreach( $users as $user ) {
 			
 			//get all the needed field data from current member here
 			$user_id = $user->id;
 
+			//create a post if the current user has no associated post
 			if ( ! $this->get_post_by_user_id($user_id) ) {
-			$username = $user->user_login;			
+				$username = $user->user_login;			
+				$post_content = xprofile_get_field_data('Om din virksomhet', $id, 'string');
 
-			//make a new post with the 'BPPMember' type
-			$member_post_arr = array(
-				'post_title'   => $username,
-				'post_status'  => 'publish',
-				'post_type' => 'WPPUser'
-			);
+				//make a new post with the 'BPPMember' type
+				$member_post_arr = array(
+					'post_title'   => $username,
+					'post_content' => $post_content,
+					'post_status'  => 'publish',
+					'post_type' => 'WPPUser'
+				);
 
-			$post_id = wp_insert_post( $member_post_arr );
+				$post_id = wp_insert_post( $member_post_arr );
 
-			//store the user data in a hidden field for updating purposes
-			add_post_meta($post_id, "_user", $user->data);
-			add_post_meta($post_id, "_user_id", $user_id);
+				//store the user data in a hidden field for updating purposes
+				add_post_meta($post_id, "_user", $user->data);
+				add_post_meta($post_id, "_user_id", $user_id);
 
-			if($post_id) {
-				//post was successfully registered
-				$post_count++;
-			}
-			//modify the postdata to match the users xprofile field values
-			/**if ( bp_has_profile() ) {
-				while ( bp_profile_groups() ) : bp_the_profile_group();
-					while ( bp_profile_fields() ) : bp_the_profile_field();
-						global $field;
-      					$fieldname = bp_unserialize_profile_field( $field->name );
-      					$fieldvalue = (bp_get_profile_field_data('field='. $fieldname .'&user_id='. $id));
-      					add_post_meta($post_id, $fieldname, $fieldvalue);
-         			endwhile; //fields
+				if($post_id) {
+					//post was successfully registered
+					$post_count++;
+				}
+				//modify the postdata to match the users xprofile field values
+				if ( bp_has_profile() ) {
+					while ( bp_profile_groups() ) : bp_the_profile_group();
+						while ( bp_profile_fields() ) : bp_the_profile_field();
+							global $field;
+	      					$fieldname = bp_unserialize_profile_field( $field->name );
+	      					$fieldvalue = (bp_get_profile_field_data('field='. $fieldname .'&user_id='. $id));
+	      					add_post_meta($post_id, $fieldname, $fieldvalue);
+	         			endwhile; //fields
 					endwhile; //groups
-		
-			}*/
+				}
+
+				//set thumbnail
+				//TODO: create a way to check if user avatar has changed
+				$avatar_url = get_avatar_url($user_id);
+				if ( $avatar_url ) {
+					$this->generate_thumbnail($avatar_url, $post_id, $username);
+				}
 			}
 		}	
 
@@ -160,17 +171,30 @@ class Wp_Postify_Users_Helper {
 	 * @since 1.0.0
 	 */
 	public function remove_user_posts() {
+		
+		$user_posts = get_posts( array( 'post_type' => 'WPPUser', 'posts_per_page' => -1 ) );
+		
+		$post_count = 0;
+		
+		foreach( $user_posts as $post ) {
+     		
+			$media = get_children( array(
+			        'post_parent' => $post->ID,
+			        'post_type'   => 'attachment'
+			    ) );
 
-		global $wpdb;
+			    if( ! empty( $media ) ) {
+			        foreach( $media as $file ) {
+			        	wp_delete_attachment( $file->ID );
+			    	}
+			    }
 
-		$posts_table = $wpdb->posts;
-
-		$query = "
-		  DELETE FROM {$posts_table}
-		  WHERE post_type = 'WPPUser' 
-		";
-
-		$post_count = $wpdb->query($query);
+			    
+     		// delete post
+    		wp_delete_post( $post->ID, true);
+    		$post_count++;	
+   		}
+		
 		$post_count_notice = $post_count . " posts deleted.";
 
 		return $post_count_notice;
@@ -229,5 +253,36 @@ class Wp_Postify_Users_Helper {
 			}
 		} 
 		return false;
+	}
+
+	/**
+	 * Generates a thumbnail for a post using the users avatar
+	 */
+	public function generate_thumbnail($image_url, $post_id, $username) {
+		$upload_dir = wp_upload_dir();
+	    $image_data = file_get_contents($image_url);
+	    $filename = basename($image_url);
+	    
+	    if( !file_exists ( $filename ) ) { 
+			if(wp_mkdir_p($upload_dir['path']))     $file = $upload_dir['path'] . '/' . $filename;
+		    else                                    $file = $upload_dir['basedir'] . '/' . $filename;
+		   
+		    
+		    file_put_contents($file, $image_data);
+
+		    $wp_filetype = wp_check_filetype($filename, null );
+		    $attachment = array(
+		        'post_mime_type' => $wp_filetype['type'],
+		        'post_title' => sanitize_file_name($username),
+		        'post_content' => '',
+		        'post_status' => 'inherit'
+		    );
+		    
+		    $attach_id = wp_insert_attachment( $attachment, $file, $post_id );
+		    require_once(ABSPATH . 'wp-admin/includes/image.php');
+		    $attach_data = wp_generate_attachment_metadata( $attach_id, $file );
+		    $res1 = wp_update_attachment_metadata( $attach_id, $attach_data );
+		    $res2 = set_post_thumbnail( $post_id, $attach_id );
+		}
 	}
 }
