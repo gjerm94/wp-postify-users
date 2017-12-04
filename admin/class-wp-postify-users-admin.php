@@ -194,7 +194,7 @@ class Wp_Postify_Users_Admin {
 			if (!empty($_POST['wppu_postify'])) {
 				$insert_post_notice = $helper->register_user_posts();
 			} elseif(!empty($_POST['wppu_remove_posts'])) {
-				$insert_post_notice = $helper->remove_user_posts();	
+				$insert_post_notice = $helper->remove_all_user_posts();	
 			}
 
 			// server response

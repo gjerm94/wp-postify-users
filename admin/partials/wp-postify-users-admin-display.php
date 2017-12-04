@@ -57,18 +57,36 @@ if ( !current_user_can( 'manage_options' ) )  {
 
 	foreach( $users as $user ) {
 		$user_id = $user->id;
-		$username = $user->user_login;
+		//$username = $user->user_login;
 		//var_dump($user->data);
+		//var_dump(get_user_meta( $user_id, 'Gårdsnavn' )); 
+		//echo "<br />";
+$helper = new Wp_Postify_Users_Helper($this->plugin_name, $this->version);
+$user_post = $helper->get_post_by_user_id($user_id);
+		if ( bp_has_profile() ) {
+					while ( bp_profile_groups() ) : bp_the_profile_group();
+						while ( bp_profile_fields() ) : bp_the_profile_field();
+							global $field;
+	      					$fieldname = bp_unserialize_profile_field( $field->name );
+	      					$fieldvalue = (bp_get_profile_field_data('field='. $fieldname .'&user_id='. $user_id));
+	      					$user_val[$fieldname] = $fieldvalue;
+	      					
+	      					$post_val = get_post_meta($user_post->ID, $fieldname);
+	      					
+	      					//var_dump($post_val);
+	         			endwhile; //fields
+					endwhile; //groups
+					//var_dump($userval);
+				}
+				
+	      					
+	      					//var_dump($user_post);
 	}
+
+
+
 	echo "<br />";
 	
-	/**$posts_table = $wpdb->posts;
-	$query = "
-			SELECT * FROM {$posts_table}
-			WHERE post_type = 'WPPUser'
-		";
-	$wppusers = $wpdb->get_results($query);*/
-
 	$args = array(
 		'post_type' => 'WPPUser',
 		'posts_per_page' => -1
@@ -80,8 +98,23 @@ if ( !current_user_can( 'manage_options' ) )  {
 		echo COUNT($wppusers);
 	}
 
+	/**$posts_table = $wpdb->posts;
+	$query = "
+			SELECT * FROM {$posts_table}
+			WHERE post_type = 'WPPUser'
+		";
+	$wppusers = $wpdb->get_results($query);*/
+
 	
-	
+
+	/**$mycustomposts = get_posts( array( 'post_type' => 'WPPUser', 'posts_per_page' => -1 ) );
+	foreach ( $mycustomposts as $post ) {
+		
+		var_dump(get_post_meta( $post->ID, '_user' ));
+	}**/
+
+
+
 
 ?>
 <!-- This file should primarily consist of HTML with a little bit of PHP. -->

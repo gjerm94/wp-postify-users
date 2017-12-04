@@ -117,10 +117,16 @@ class Wp_Postify_Users_Helper {
 			//get all the needed field data from current member here
 			$user_id = $user->id;
 
-			//create a post if the current user has no associated post
-			if ( ! $this->get_post_by_user_id($user_id) ) {
+			//create a post if the current user has no associated post OR user has updated their data
+			if ( $this->user_info_is_updated($user_id)) {
+				
+				//remove old post if updated user data
+				//TODO: It would probably be better to update the post instead of deleting the old one
+				if ( $this->user_info_is_updated($user_id) && $this->get_post_by_user_id($user_id) ) {
+					$this->remove_user_post($user_id);
+				}
 				$username = $user->user_login;			
-				$post_content = xprofile_get_field_data('Om din virksomhet', $id, 'string');
+				$post_content = xprofile_get_field_data('Om din virksomhet', $user_id, 'string');
 
 				//make a new post with the 'BPPMember' type
 				$member_post_arr = array(
@@ -140,13 +146,14 @@ class Wp_Postify_Users_Helper {
 					//post was successfully registered
 					$post_count++;
 				}
+
 				//modify the postdata to match the users xprofile field values
 				if ( bp_has_profile() ) {
 					while ( bp_profile_groups() ) : bp_the_profile_group();
 						while ( bp_profile_fields() ) : bp_the_profile_field();
 							global $field;
 	      					$fieldname = bp_unserialize_profile_field( $field->name );
-	      					$fieldvalue = (bp_get_profile_field_data('field='. $fieldname .'&user_id='. $id));
+	      					$fieldvalue = (bp_get_profile_field_data('field='. $fieldname .'&user_id='. $user_id));
 	      					add_post_meta($post_id, $fieldname, $fieldvalue);
 	         			endwhile; //fields
 					endwhile; //groups
@@ -158,6 +165,8 @@ class Wp_Postify_Users_Helper {
 				if ( $avatar_url ) {
 					$this->generate_thumbnail($avatar_url, $post_id, $username);
 				}
+
+				
 			}
 		}	
 
@@ -170,16 +179,27 @@ class Wp_Postify_Users_Helper {
 	 * 
 	 * @since 1.0.0
 	 */
-	public function remove_user_posts() {
+	public function remove_all_user_posts() {
 		
 		$user_posts = get_posts( array( 'post_type' => 'WPPUser', 'posts_per_page' => -1 ) );
 		
 		$post_count = 0;
 		
 		foreach( $user_posts as $post ) {
-     		
-			$media = get_children( array(
-			        'post_parent' => $post->ID,
+     		$this->remove_user_post( $post->ID );
+			
+    		$post_count++;	
+   		}
+		
+		$post_count_notice = $post_count . " posts deleted.";
+
+		return $post_count_notice;
+
+	}
+
+	public function remove_user_post( $post_id ) {
+		$media = get_children( array(
+			        'post_parent' => $post_id,
 			        'post_type'   => 'attachment'
 			    ) );
 
@@ -191,14 +211,7 @@ class Wp_Postify_Users_Helper {
 
 			    
      		// delete post
-    		wp_delete_post( $post->ID, true);
-    		$post_count++;	
-   		}
-		
-		$post_count_notice = $post_count . " posts deleted.";
-
-		return $post_count_notice;
-
+    		wp_delete_post( $post_id, true);
 	}
 
 	/**
@@ -207,16 +220,40 @@ class Wp_Postify_Users_Helper {
 	 * @since 1.0.0
 	 */
 	public function user_info_is_updated($user_id) {
+		
+		//check for changes in the user data
 		$user = get_user_by('id',$user_id);
 		$user_data = $user->data;
 
-		$user_post_data = get_post_meta(4092, "_user");
+		$user_post = $this->get_post_by_user_id($user_id);
 		
-
-
-		//get post meta returns array so we need to compare the first value of user_post_data
-		if ( $user_data == $user_post_data[0] ) {
+		if ( ! $user_post ) {
 			return true;
+		}
+
+		$user_post_data = get_post_meta($user_post->ID, "_user");
+
+		if ( $user_data == $user_post_data ) {
+			return true;
+		}
+		
+		//check for changes in extended profile fields
+		if ( bp_has_profile() ) {
+			while ( bp_profile_groups() ) : bp_the_profile_group();
+				//loop through each field
+				while ( bp_profile_fields() ) : bp_the_profile_field();
+					global $field;
+  					$fieldname = bp_unserialize_profile_field( $field->name );
+  					$fieldvalue = (bp_get_profile_field_data('field='. $fieldname .'&user_id='. $user_id));
+  					  					
+  					$post_val = get_post_meta($user_post->ID, $fieldname);
+  					
+  					if ( $fieldvalue !== $post_val[0]) {
+  						//user has changed field value 
+  						return true;
+  					} 
+     			endwhile; //fields
+			endwhile; //groups
 		}
 
 		return false;
@@ -248,7 +285,7 @@ class Wp_Postify_Users_Helper {
 				$user_post_id = get_post_meta(get_the_ID(), "_user_id", true);
 				
 				if ($user_post_id == $user_id) {
-					return true;
+					return $query->post;
 				}
 			}
 		} 
