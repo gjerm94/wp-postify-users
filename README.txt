@@ -1,5 +1,5 @@
-=== Plugin Name ===
-Contributors: (this should be a list of wordpress.org userid's)
+=== WordPress Postify Users ===
+Contributors: gjerm94
 Donate link: https://github.com/gjerm94
 Tags: comments, spam
 Requires at least: 3.0.1

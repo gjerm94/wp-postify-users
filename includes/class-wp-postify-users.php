@@ -77,7 +77,6 @@ class Wp_Postify_Users {
 		$this->load_dependencies();
 		$this->set_locale();
 		$this->define_admin_hooks();
-		$this->define_public_hooks();
 		$this->define_other_hooks();
 	}
 
@@ -89,7 +88,6 @@ class Wp_Postify_Users {
 	 * - Wp_Postify_Users_Loader. Orchestrates the hooks of the plugin.
 	 * - Wp_Postify_Users_i18n. Defines internationalization functionality.
 	 * - Wp_Postify_Users_Admin. Defines all hooks for the admin area.
-	 * - Wp_Postify_Users_Public. Defines all hooks for the public side of the site.
 	 *
 	 * Create an instance of the loader which will be used to register the hooks
 	 * with WordPress.
@@ -115,12 +113,6 @@ class Wp_Postify_Users {
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-wp-postify-users-admin.php';
-
-		/**
-		 * The class responsible for defining all actions that occur in the public-facing
-		 * side of the site.
-		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-wp-postify-users-public.php';
 
 		/**
 		 * The class responsible for defining all actions related to the core functionality
@@ -173,22 +165,6 @@ class Wp_Postify_Users {
 		
 		// Register admin notices
 		$this->loader->add_action( 'admin_notices', $plugin_admin, 'print_plugin_admin_notices');
-	}
-
-	/**
-	 * Register all of the hooks related to the public-facing functionality
-	 * of the plugin.
-	 *
-	 * @since    1.0.0
-	 * @access   private
-	 */
-	private function define_public_hooks() {
-
-		$plugin_public = new Wp_Postify_Users_Public( $this->get_plugin_name(), $this->get_version() );
-
-		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
-		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
-
 	}
 
 	/**

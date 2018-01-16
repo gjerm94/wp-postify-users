@@ -123,6 +123,7 @@ class Wp_Postify_Users_Helper {
 				//remove old post if updated user data
 				//TODO: It would probably be better to update the post instead of deleting the old one
 				if ( $this->user_info_is_updated($user_id) && $this->get_post_by_user_id($user_id) ) {
+					//TODO: send post id here, not user id
 					$this->remove_user_post($user_id);
 				}
 				$username = $user->user_login;			

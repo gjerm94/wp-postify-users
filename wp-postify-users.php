@@ -15,7 +15,7 @@
  * @wordpress-plugin
  * Plugin Name:       WP Postify Users
  * Plugin URI:        https://github.com/gjerm94/wp-postify-users
- * Description:       This is a short description of what the plugin does. It's displayed in the WordPress admin area.
+ * Description:       A plugin for WordPress that generates posts for each registered user on your site.
  * Version:           1.0.0
  * Author:            gjerm94
  * Author URI:        https://github.com/gjerm94
