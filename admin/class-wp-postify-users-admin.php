@@ -123,18 +123,45 @@ class Wp_Postify_Users_Admin {
 			$this->plugin_name
 		);
 
+		/**
+		 * Register the post type name settings field (text input)
+		 */
 		add_settings_field(
 			$this->option_name . '_post_type_name',
-			__( 'Name of the custom post type: ', 'outdated-notice' ),
+			__( 'Name of the custom post type: ', 'wp-postify-users' ),
 			array( $this, $this->option_name . '_post_type_name_cb' ),
 			$this->plugin_name,
 			$this->option_name . '_general',
 			array( 'label_for' => $this->option_name . '_post_type_name' )
 		);
 
+		/**
+		 * Register the include custom fields settings field (checkbox)
+		 */ 
+		add_settings_field(
+			$this->option_name . '_include_custom_fields',
+			__( 'Include user custom fields in the posts (if available) ', 'wp-postify-users' ),
+			array( $this, $this->option_name . '_include_custom_fields_cb' ),
+			$this->plugin_name,
+			$this->option_name . '_general',
+			array( 'label_for' => $this->option_name . '_include_custom_fields' )
+		);
 		
+		/**
+		 * Register the post-content settings field (select)
+		 */ 
+		add_settings_field(
+			$this->option_name . '_post_content',
+			__( 'Use this field value as post-contents: ', 'wp-postify-users' ),
+			array( $this, $this->option_name . '_post_content_cb' ),
+			$this->plugin_name,
+			$this->option_name . '_general',
+			array( 'label_for' => $this->option_name . '_post_content' )
+		);
+
 		register_setting( $this->plugin_name, $this->option_name . '_post_type_name', $args );
-		//update_option('wppu_post_type_name', array('default' => 'WPPUser'));
+		register_setting( $this->plugin_name, $this->option_name . '_include_custom_fields', $args );
+		register_setting( $this->plugin_name, $this->option_name . '_post_content', $args );
 	}
 
 	/**
@@ -152,7 +179,41 @@ class Wp_Postify_Users_Admin {
 	 * @since  1.0.0
 	 */
 	public function wppu_post_type_name_cb() {
-		echo '<input type="text" name="' . $this->option_name . '_post_type_name' . '" id="' . $this->option_name . '_post_type_name' . '"> ';
+		$post_type_name = get_option('wppu_post_type_name');
+		echo '<input type="text" name="' . $this->option_name . '_post_type_name' . '" id="' . $this->option_name . '_post_type_name' . '" value="' . $post_type_name . '"> ';
+	}
+
+	/**
+	 * Render the include custom fields input for this plugin
+	 *
+	 * @since  1.0.0
+	 */
+	public function wppu_include_custom_fields_cb() {
+		$include_custom_fields = get_option('wppu_include_custom_fields');
+		echo "<input type='checkbox' name='" . $this->option_name . '_include_custom_fields' . "' id='" . $this->option_name . "_include_custom_fields'" . checked($include_custom_fields, "on", false) . "'> ";
+	}
+
+	/**
+	 * Render the post-content field input for this plugin
+	 *
+	 * @since  1.0.0
+	 */
+	public function wppu_post_content_cb() {
+		//Fetch the xprofile field names to populate the select
+		//Should probably find a way to see if xprofile exists in the future
+		$profile_groups = BP_XProfile_Group::get( array( 'fetch_fields' => true	) );
+
+		echo "<select name='" . $this->option_name . '_post_content' . "' id='" . $this->option_name . '_post_content' . "'>";
+		if ( !empty( $profile_groups ) ) {
+			foreach ( $profile_groups as $profile_group ) {
+				if ( !empty( $profile_group->fields ) ) {				
+					foreach ( $profile_group->fields as $field ) {
+						echo "<option id='" . $field->id . "' value='" . $field->name . "'>" . $field->name . "</option>";
+					}
+				}
+			}
+		}
+		echo "</select>";
 	}
 
 	/**

@@ -90,8 +90,8 @@ class Wp_Postify_Users_Helper {
 			"map_meta_cap" => true,
 			"hierarchical" => false,
 			"query_var" => true,
-			"supports" => array( "title", "thumbnail", "excerpt", "custom-fields" ),
-			"taxonomies" => array( "category" ),
+			"supports" => array( "title", "thumbnail", "excerpt", "custom-fields", "editor" ),
+			"taxonomies" => array( "category" )
 		);
 
 		register_post_type( "WPPUser", $args );
@@ -126,8 +126,13 @@ class Wp_Postify_Users_Helper {
 					//TODO: send post id here, not user id
 					$this->remove_user_post($user_id);
 				}
-				$username = $user->user_login;			
-				$post_content = xprofile_get_field_data('Om din virksomhet', $user_id, 'string');
+				$username = $user->user_login;
+
+				//get the name of the field in the post content option			
+				$post_content = get_option('wppu_post_content');
+
+				//get value of post content field
+				$post_content = bp_get_profile_field_data('field=' . $post_content . '&user_id=' . $user_id);
 
 				//make a new post with the 'BPPMember' type
 				$member_post_arr = array(
@@ -154,7 +159,7 @@ class Wp_Postify_Users_Helper {
 						while ( bp_profile_fields() ) : bp_the_profile_field();
 							global $field;
 	      					$fieldname = bp_unserialize_profile_field( $field->name );
-	      					$fieldvalue = (bp_get_profile_field_data('field='. $fieldname .'&user_id='. $user_id));
+	      					$fieldvalaue = bp_get_profile_field_data('field='. $fieldname .'&user_id='. $user_id);
 	      					add_post_meta($post_id, $fieldname, $fieldvalue);
 	         			endwhile; //fields
 					endwhile; //groups

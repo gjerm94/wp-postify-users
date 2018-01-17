@@ -48,7 +48,19 @@ if ( !current_user_can( 'manage_options' ) )  {
 <?php 
 
 	echo get_option('wppu_post_type_name');
+echo get_option('wppu_include_custom_fields');
 
+$profile_groups = BP_XProfile_Group::get( array( 'fetch_fields' => true	) );
+
+if ( !empty( $profile_groups ) ) {
+	 foreach ( $profile_groups as $profile_group ) {
+		if ( !empty( $profile_group->fields ) ) {				
+			foreach ( $profile_group->fields as $field ) {
+				echo $field->id . ' - ' . $field->name . '<br/>';
+			}
+		}
+	}
+}
 
 	global $wpdb;
 	

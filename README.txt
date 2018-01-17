@@ -1,7 +1,7 @@
 === WordPress Postify Users ===
 Contributors: gjerm94
 Donate link: https://github.com/gjerm94
-Tags: comments, spam
+Tags: users, posts
 Requires at least: 3.0.1
 Tested up to: 3.4
 Stable tag: 4.3
