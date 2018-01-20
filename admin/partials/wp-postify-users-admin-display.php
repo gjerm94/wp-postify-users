@@ -123,9 +123,28 @@ $user_post = $helper->get_post_by_user_id($user_id);
 	foreach ( $mycustomposts as $post ) {
 		
 		var_dump(get_post_meta( $post->ID, '_user' ));
-	}**/
+	}*/
 
+$user_id = 98;
 
+$user = get_user_by('id',$user_id);
+		$helper = new Wp_Postify_Users_Helper($this->plugin_name, $this->version);
+
+		$user_data = $user->data;
+
+		$user_post = $helper->get_post_by_user_id($user_id);
+		
+		if ( ! $user_post ) {
+		
+		}
+
+		$user_post_data = get_post_meta($user_post->ID, "_user");
+
+		//if ( $user_data !== $user_post_data ) {
+			var_dump( $user_data );
+			echo '<br />';
+			var_dump( $user_post_data[0] );
+		//}
 
 
 ?>

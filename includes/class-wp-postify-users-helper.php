@@ -239,12 +239,12 @@ class Wp_Postify_Users_Helper {
 
 		$user_post_data = get_post_meta($user_post->ID, "_user");
 
-		if ( $user_data == $user_post_data ) {
+		if ( $user_data != $user_post_data[0] ) {
 			return true;
 		}
 		
 		//check for changes in extended profile fields
-		if ( bp_has_profile() ) {
+		/**if ( bp_has_profile() ) {
 			while ( bp_profile_groups() ) : bp_the_profile_group();
 				//loop through each field
 				while ( bp_profile_fields() ) : bp_the_profile_field();
@@ -260,7 +260,7 @@ class Wp_Postify_Users_Helper {
   					} 
      			endwhile; //fields
 			endwhile; //groups
-		}
+		}**/
 
 		return false;
 	}
