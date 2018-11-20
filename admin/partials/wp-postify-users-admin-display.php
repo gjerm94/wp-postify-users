@@ -12,12 +12,11 @@
  * @subpackage Wp_Postify_Users/admin/partials
  */
 ?>
+
 <?php
-if ( !current_user_can( 'manage_options' ) )  {
-    wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
-}
-
-
+	if ( !current_user_can( 'manage_options' ) )  {
+	    wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+	}
 ?>
 
 <div class="wrap">
@@ -47,7 +46,7 @@ if ( !current_user_can( 'manage_options' ) )  {
 
 <?php 
 
-	echo get_option('wppu_post_type_name');
+echo get_option('wppu_post_type_name');
 echo get_option('wppu_include_custom_fields');
 
 $profile_groups = BP_XProfile_Group::get( array( 'fetch_fields' => true	) );
@@ -125,7 +124,7 @@ $user_post = $helper->get_post_by_user_id($user_id);
 		var_dump(get_post_meta( $post->ID, '_user' ));
 	}*/
 
-$user_id = 98;
+$user_id = 1;
 
 $user = get_user_by('id',$user_id);
 		$helper = new Wp_Postify_Users_Helper($this->plugin_name, $this->version);
@@ -138,12 +137,12 @@ $user = get_user_by('id',$user_id);
 		
 		}
 
-		$user_post_data = get_post_meta($user_post->ID, "_user");
+		$user_post_data = get_post_meta($user_post->ID);
 
 		//if ( $user_data !== $user_post_data ) {
-			var_dump( $user_data );
+			//var_dump( $user_data );
 			echo '<br />';
-			var_dump( $user_post_data[0] );
+			var_dump( $user_post_data );
 		//}
 
 

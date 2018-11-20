@@ -69,13 +69,19 @@ class Wp_Postify_Users_Helper {
 		 * Post Type: WPPUsers.
 		 */
 
+		$post_type = get_option('wppu_post_type_name');
+
+		if ( !$post_type ) {
+			$post_type = 'WPPUsers'; 
+		}
+
 		$labels = array(
-			"name" => __( "WPPUsers", "" ),
-			"singular_name" => __( "WPPUser", "" ),
+			"name" => __( $post_type, "" ),
+			"singular_name" => __( $post_type, "" ),
 		);
 
 		$args = array(
-			"label" => __( "WPPUsers", "" ),
+			"label" => __( $post_type, "" ),
 			"labels" => $labels,
 			"description" => "",
 			"public" => true,
@@ -94,7 +100,7 @@ class Wp_Postify_Users_Helper {
 			"taxonomies" => array( "category" )
 		);
 
-		register_post_type( "WPPUser", $args );
+		register_post_type( $post_type, $args );
 	}
 
 	/**
@@ -144,8 +150,7 @@ class Wp_Postify_Users_Helper {
 
 				$post_id = wp_insert_post( $member_post_arr );
 
-				//store the user data in a hidden field for updating purposes
-				add_post_meta($post_id, "_user", $user->data);
+				//store the user data in a hidden field for updating purposes				
 				add_post_meta($post_id, "_user_id", $user_id);
 
 				if($post_id) {
@@ -158,9 +163,9 @@ class Wp_Postify_Users_Helper {
 					while ( bp_profile_groups() ) : bp_the_profile_group();
 						while ( bp_profile_fields() ) : bp_the_profile_field();
 							global $field;
-	      					$fieldname = bp_unserialize_profile_field( $field->name );
-	      					$fieldvalaue = bp_get_profile_field_data('field='. $fieldname .'&user_id='. $user_id);
-	      					add_post_meta($post_id, $fieldname, $fieldvalue);
+	      					$field_name = bp_unserialize_profile_field( $field->name );
+	      					$field_value = bp_get_profile_field_data( 'field='. $field_name .'&user_id='. $user_id );
+							add_post_meta($post_id, $field_name, $field_value);
 	         			endwhile; //fields
 					endwhile; //groups
 				}

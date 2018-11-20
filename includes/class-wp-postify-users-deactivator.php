@@ -32,9 +32,11 @@ class Wp_Postify_Users_Deactivator {
 
 		$posts_table = $wpdb->posts;
 
+		$post_type = get_option('wppu_post_type_name');
+
 		$query = "
 		  DELETE FROM {$posts_table}
-		  WHERE post_type = 'member' 
+		  WHERE post_type = 'wppuser' 
 		";
 
 		$wpdb->query($query);

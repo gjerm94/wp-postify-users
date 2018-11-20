@@ -28,7 +28,7 @@
  * @author     gjerm94 <gjermundbakken94@gmail.com>
  */
 class Wp_Postify_Users {
-
+	
 	/**
 	 * The loader that's responsible for maintaining and registering all hooks that power
 	 * the plugin.
@@ -56,6 +56,25 @@ class Wp_Postify_Users {
 	 * @var      string    $version    The current version of the plugin.
 	 */
 	protected $version;
+
+	/**
+	 * Default options for the plugin
+	 * 
+	 * @var		array
+	 */
+	private $default_settings = array(
+		'wppu_post_type_name' 			=> 'WPPUsers',
+		'wppu_post_type_singular' 		=> 'WPPUser',
+		'wppu_include_custom_fields' 	=> false
+	);
+
+	/**
+	 * This options array is setup during class instantiation, holds
+	 * default and saved options for the plugin.
+	 *
+	 * @var array
+	 */
+	public $settings        = [];	
 
 	/**
 	 * Define the core functionality of the plugin.
@@ -180,6 +199,15 @@ class Wp_Postify_Users {
 
 		$this->loader->add_action( 'init', $plugin_helper, 'register_custom_post_type' );
 
+	}
+
+
+	/**
+	 * Setup saved or default options for the plugins
+	 * 
+	 */
+	private function setup_settings() {
+		
 	}
 
 	/**
