@@ -59,8 +59,10 @@ class Wp_Postify_Users_Helper {
 	}
 
 	/**
-	 * Register the "WPPUsers" custom post type.
+	 * Register the custom post type that will be used for the postified users.
 	 *
+	 * @todo	 Add settings for all args for the post type
+	 * 
 	 * @since    1.0.0
 	 */
 	public function register_custom_post_type() {
@@ -89,7 +91,7 @@ class Wp_Postify_Users_Helper {
 			"show_ui" => true,
 			"show_in_rest" => false,
 			"rest_base" => "",
-			"has_archive" => false,
+			"has_archive" => true,
 			"show_in_menu" => true,
 			"exclude_from_search" => true,
 			"capability_type" => "post",
@@ -101,6 +103,77 @@ class Wp_Postify_Users_Helper {
 		);
 
 		register_post_type( $post_type, $args );
+	}
+
+	/**
+	 * Register a post for the passed user object
+	 * 
+	 * @return   int 	The ID of the post
+	 * 
+	 * @since	 1.0.0
+	 */
+	public function register_user_post( $user ) {
+		//get all the needed field data from current member here
+		$user_id = $user->id;
+		$post_id = 0;
+		//create a post if the current user has no associated post OR user has updated their data
+		if ( $this->user_info_is_updated($user_id)) {
+			
+			//remove old post if updated user data
+			//TODO: It would probably be better to update the post instead of deleting the old one
+			if ( $this->user_info_is_updated($user_id) && $this->get_post_by_user_id($user_id) ) {
+				//TODO: send post id here, not user id
+				$this->remove_user_post($user_id);
+			}
+
+			$username = $user->user_login;
+
+			//get the name of the field in the post content option			
+			$post_content = get_option('wppu_post_content');
+
+			//get value of post content field
+			$post_content = bp_get_profile_field_data('field=' . $post_content . '&user_id=' . $user_id);
+
+			//make a new post with the 'BPPMember' type
+			$member_post_arr = array(
+				'post_title'   => $username,
+				'post_content' => $post_content,
+				'post_status'  => 'publish',
+				'post_type' => 'WPPUser'
+			);
+
+			$post_id = wp_insert_post( $member_post_arr );
+
+			//store the user data in a hidden field for updating purposes				
+			add_post_meta($post_id, "_user_id", $user_id);
+
+			//modify the postdata to match the users xprofile field values
+			if ( bp_has_profile() ) {
+				
+				while ( bp_profile_groups() ) : bp_the_profile_group();
+					
+					while ( bp_profile_fields() ) : bp_the_profile_field();
+						
+						global $field;
+						$field_name = bp_unserialize_profile_field( $field->name );
+						$field_value = bp_get_profile_field_data( 'field='. $field_name .'&user_id='. $user_id );
+						add_post_meta($post_id, $field_name, $field_value);
+					
+					endwhile; //fields
+				
+				endwhile; //groups
+			
+			}
+
+			//set thumbnail
+			//TODO: create a way to check if user avatar has changed
+			$avatar_url = get_avatar_url($user_id);
+			if ( $avatar_url ) {
+				$this->generate_thumbnail($avatar_url, $post_id, $username);
+			}
+		}	
+
+		return $post_id;
 	}
 
 	/**
@@ -120,67 +193,12 @@ class Wp_Postify_Users_Helper {
 		//loop through each user
 		foreach( $users as $user ) {
 			
-			//get all the needed field data from current member here
-			$user_id = $user->id;
-
-			//create a post if the current user has no associated post OR user has updated their data
-			if ( $this->user_info_is_updated($user_id)) {
-				
-				//remove old post if updated user data
-				//TODO: It would probably be better to update the post instead of deleting the old one
-				if ( $this->user_info_is_updated($user_id) && $this->get_post_by_user_id($user_id) ) {
-					//TODO: send post id here, not user id
-					$this->remove_user_post($user_id);
-				}
-				$username = $user->user_login;
-
-				//get the name of the field in the post content option			
-				$post_content = get_option('wppu_post_content');
-
-				//get value of post content field
-				$post_content = bp_get_profile_field_data('field=' . $post_content . '&user_id=' . $user_id);
-
-				//make a new post with the 'BPPMember' type
-				$member_post_arr = array(
-					'post_title'   => $username,
-					'post_content' => $post_content,
-					'post_status'  => 'publish',
-					'post_type' => 'WPPUser'
-				);
-
-				$post_id = wp_insert_post( $member_post_arr );
-
-				//store the user data in a hidden field for updating purposes				
-				add_post_meta($post_id, "_user_id", $user_id);
-
-				if($post_id) {
-					//post was successfully registered
-					$post_count++;
-				}
-
-				//modify the postdata to match the users xprofile field values
-				if ( bp_has_profile() ) {
-					while ( bp_profile_groups() ) : bp_the_profile_group();
-						while ( bp_profile_fields() ) : bp_the_profile_field();
-							global $field;
-	      					$field_name = bp_unserialize_profile_field( $field->name );
-	      					$field_value = bp_get_profile_field_data( 'field='. $field_name .'&user_id='. $user_id );
-							add_post_meta($post_id, $field_name, $field_value);
-	         			endwhile; //fields
-					endwhile; //groups
-				}
-
-				//set thumbnail
-				//TODO: create a way to check if user avatar has changed
-				$avatar_url = get_avatar_url($user_id);
-				if ( $avatar_url ) {
-					$this->generate_thumbnail($avatar_url, $post_id, $username);
-				}
-
-				
+			if ( $this->register_user_post( $user ) ) {
+				$post_count++;
 			}
-		}	
-
+				
+		}
+			
 		$post_count_notice = $post_count . " posts generated.";
 		return $post_count_notice;
 	}
